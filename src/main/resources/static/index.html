@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance & Event System | Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <!-- LOGIN PANEL -->
+        <div class="glass-panel auth-panel" id="loginPanel">
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Secure Attendance & Event Monitoring</p>
+
+            <!-- Role Tabs -->
+            <div class="role-tabs">
+                <button class="role-tab active" data-role="ADMIN">Admin</button>
+                <button class="role-tab" data-role="TEACHER">Teacher</button>
+                <button class="role-tab" data-role="STUDENT">Student</button>
+            </div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" required placeholder="Enter your email">
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required placeholder="Enter your password">
+                </div>
+                <div id="errorMessage" class="error-msg hidden">Invalid credentials. Please try again.</div>
+                <button type="submit" class="btn-primary">Sign In</button>
+            </form>
+
+            <p class="footer-text" id="registerLink">New here? <a href="#" id="toggleRegister">Register now</a></p>
+        </div>
+
+        <!-- REGISTER PANEL -->
+        <div class="glass-panel auth-panel hidden" id="registerPanel">
+            <h1>Create Account</h1>
+            <p class="subtitle" id="registerSubtitle">Join as Student</p>
+
+            <form id="registerForm">
+                <div class="input-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" name="username" required placeholder="Choose a username">
+                </div>
+                <div class="input-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" name="email" required placeholder="Enter your email">
+                </div>
+                <div class="input-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" name="password" required placeholder="Create a password">
+                </div>
+                <div class="input-group">
+                    <label for="reg-linkedin">LinkedIn Profile URL</label>
+                    <input type="url" id="reg-linkedin" name="linkedin" placeholder="https://linkedin.com/in/username">
+                </div>
+                <div id="regErrorMessage" class="error-msg hidden"></div>
+                <button type="submit" class="btn-primary">Register</button>
+            </form>
+
+            <p class="footer-text">Already have an account? <a href="#" id="toggleLogin">Sign in</a></p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -6,11 +6,15 @@
     <title>Dashboard | CampusSync</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dashboard-body">
     <nav class="glass-nav">
         <div class="nav-brand">CampusSync</div>
-        <div class="nav-links">
+        <div class="nav-links" style="display: flex; align-items: center; gap: 1rem;">
+            <button id="themeToggleBtn" class="btn-outline btn-small" style="padding: 0.4rem 0.6rem; border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; border: none; background: var(--glass-bg);">🌙</button>
             <span id="welcomeUser" class="nav-user"></span>
             <span id="roleTag" class="role-tag"></span>
             <button id="logoutBtn" class="btn-outline">Logout</button>
@@ -30,96 +34,308 @@
                 <div class="stats-grid" id="overviewStats"></div>
             </section>
 
-            <!-- ADMIN: Manage Users -->
-            <section id="manageUsers" class="content-section hidden">
-                <div class="section-header">
-                    <h2>Manage Users</h2>
-                    <button class="btn-primary btn-small" onclick="openModal('addUserModal')">+ Add User</button>
-                </div>
-                <div class="filter-bar">
-                    <select id="userRoleFilter" onchange="loadUsers()">
-                        <option value="STUDENT">Students</option>
-                        <option value="TEACHER">Teachers</option>
-                    </select>
-                </div>
-                <div class="table-container">
-                    <table class="glass-table">
-                        <thead><tr><th>Name</th><th>Email</th><th>Branch</th><th>Section</th><th>Subject</th><th>Marks</th><th>Actions</th></tr></thead>
-                        <tbody id="usersTableBody"></tbody>
-                    </table>
+            <!-- ADMIN: Add Student -->
+            <section id="addStudent" class="content-section hidden">
+                <h2>Add Student</h2>
+                <div class="glass-panel" style="max-width:520px;">
+                    <form id="addStudentForm">
+                        <div class="input-group"><label>Username</label><input type="text" id="sNewUsername" required placeholder="Full Name"></div>
+                        <div class="input-group"><label>Email</label><input type="email" id="sNewEmail" required placeholder="Email"></div>
+                        <div class="input-group"><label>Password</label><input type="password" id="sNewPassword" required placeholder="Password"></div>
+                        <div class="input-group"><label>USN</label><input type="text" id="sNewUsn" placeholder="e.g. 1AB21CS001"></div>
+                        <div class="input-group"><label>Branch</label><input type="text" id="sNewBranch" placeholder="e.g. CSE"></div>
+                        <div class="input-group"><label>Section</label><input type="text" id="sNewSection" placeholder="e.g. A"></div>
+                        <div class="input-group">
+                            <label>Year</label>
+                            <select id="sNewYear">
+                                <option value="">-- Select Year --</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+                        <div id="addStudentError" class="error-msg hidden"></div>
+                        <button type="submit" class="btn-primary">Add Student</button>
+                    </form>
                 </div>
             </section>
 
-            <!-- ADMIN + TEACHER: Events -->
-            <section id="manageEvents" class="content-section hidden">
-                <div class="section-header">
-                    <h2>Events & Hackathons</h2>
-                    <button class="btn-primary btn-small" onclick="openModal('eventModal')">+ Create Event</button>
+            <!-- ADMIN: Add Faculty -->
+            <section id="addFaculty" class="content-section hidden">
+                <h2>Add Faculty</h2>
+                <div class="glass-panel" style="max-width:520px;">
+                    <form id="addFacultyForm">
+                        <div class="input-group"><label>Username</label><input type="text" id="fNewUsername" required placeholder="Full Name"></div>
+                        <div class="input-group"><label>Email</label><input type="email" id="fNewEmail" required placeholder="Email"></div>
+                        <div class="input-group"><label>Password</label><input type="password" id="fNewPassword" required placeholder="Password"></div>
+                        <div class="input-group"><label>Teacher ID</label><input type="text" id="fNewUsn" placeholder="e.g. TCH001"></div>
+                        <div class="input-group"><label>Branch</label><input type="text" id="fNewBranch" placeholder="e.g. CSE"></div>
+                        <div class="input-group"><label>Subject</label><input type="text" id="fNewSubject" placeholder="e.g. Mathematics"></div>
+                        <div class="input-group" style="display:flex;align-items:center;gap:0.75rem;">
+                            <input type="checkbox" id="fNewIsHod" style="width:18px;height:18px;accent-color:var(--accent-primary)">
+                            <label for="fNewIsHod" style="text-transform:none;font-size:0.95rem;">This teacher is HOD</label>
+                        </div>
+                        <div id="addFacultyError" class="error-msg hidden"></div>
+                        <button type="submit" class="btn-primary">Add Faculty</button>
+                    </form>
                 </div>
-                <div id="adminEventsList" class="events-grid"></div>
             </section>
 
-            <!-- TEACHER: My Students -->
-            <section id="myStudents" class="content-section hidden">
-                <div class="section-header">
-                    <h2>My Students</h2>
+            <!-- ADMIN: Manage Students -->
+            <section id="manageStudents" class="content-section hidden">
+                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <h2>Manage Students</h2>
                     <div class="filter-bar" style="margin:0">
-                        <input type="text" id="subjectFilter" placeholder="Filter by subject" style="padding:0.4rem 0.8rem;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary)">
-                        <select id="branchFilter" style="padding:0.4rem 0.8rem;background:#1e293b;border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary)">
-                            <option value="">All Branches</option>
-                            <option value="CSE">CSE</option>
-                            <option value="ECE">ECE</option>
-                            <option value="MECH">MECH</option>
-                            <option value="CIVIL">CIVIL</option>
-                            <option value="EEE">EEE</option>
+                        <select id="msYearFilter" style="padding:0.4rem 0.8rem;background:#1e293b;border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary)">
+                            <option value="">All Years</option>
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year">2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                            <option value="4th Year">4th Year</option>
                         </select>
-                        <select id="sectionFilter" style="padding:0.4rem 0.8rem;background:#1e293b;border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary)">
+                        <select id="msSectionFilter" style="padding:0.4rem 0.8rem;background:#1e293b;border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary)">
                             <option value="">All Sections</option>
                             <option value="A">A</option>
                             <option value="B">B</option>
                             <option value="C">C</option>
                         </select>
-                        <button class="btn-primary btn-small" onclick="loadMyStudents()">Filter</button>
+                        <button class="btn-primary btn-small" onclick="renderStudentsByYear()">Filter</button>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table class="glass-table">
-                        <thead><tr><th>Name</th><th>Email</th><th>Branch</th><th>Section</th><th>Subject</th><th>Marks</th><th>Report</th></tr></thead>
-                        <tbody id="myStudentsBody"></tbody>
-                    </table>
-                </div>
+                <div class="year-tabs" id="yearTabs"></div>
+                <div id="yearSectionsContainer"></div>
             </section>
 
-            <!-- TEACHER: Mark Attendance -->
-            <section id="markAttendance" class="content-section hidden">
-                <h2>Mark Attendance</h2>
-                <div class="filter-bar">
-                    <select id="attendanceEventSelect"><option value="">-- Select Event --</option></select>
-                    <button class="btn-primary btn-small" onclick="loadStudentsForAttendance()">Load Students</button>
+            <!-- ADMIN: Manage Faculty -->
+            <section id="manageFaculty" class="content-section hidden">
+                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <h2>Manage Faculty</h2>
+                    <div class="filter-bar" style="margin:0">
+                        <select id="mfBranchFilter" style="padding:0.4rem 0.8rem;background:#1e293b;border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary)">
+                            <option value="">All Branches</option>
+                            <option value="CSE">CSE</option>
+                            <option value="ISE">ISE</option>
+                            <option value="ECE">ECE</option>
+                            <option value="MECH">MECH</option>
+                            <option value="CIVIL">CIVIL</option>
+                        </select>
+                        <button class="btn-primary btn-small" onclick="renderFacultyByBranch()">Filter</button>
+                    </div>
                 </div>
-                <div class="table-container" id="attendanceMarkTable" style="margin-top:1rem;"></div>
-                <button class="btn-primary" id="submitAttendanceBtn" style="margin-top:1rem;display:none;max-width:200px" onclick="submitBulkAttendance()">Submit Attendance</button>
+                <div id="facultyBranchContainer"></div>
             </section>
 
-            <!-- TEACHER: Update Marks -->
-            <section id="updateMarks" class="content-section hidden">
-                <h2>Update Student Marks</h2>
-                <div class="table-container">
-                    <table class="glass-table">
-                        <thead><tr><th>Name</th><th>Email</th><th>Branch</th><th>Section</th><th>Current Marks</th><th>Update</th></tr></thead>
-                        <tbody id="marksTableBody"></tbody>
-                    </table>
+            <!-- ADMIN: Manage Events -->
+            <section id="manageEvents" class="content-section hidden">
+                <div class="section-header">
+                    <h2>Events &amp; Hackathons</h2>
+                    <button class="btn-primary btn-small" onclick="openModal('eventModal')">+ Create Event</button>
                 </div>
+                <div id="adminEventsList" class="events-grid"></div>
             </section>
 
-            <!-- TEACHER: Attendance Report -->
-            <section id="attendanceReport" class="content-section hidden">
-                <h2>Attendance Report</h2>
-                <div class="filter-bar">
-                    <select id="reportStudentSelect"><option value="">-- Select Student --</option></select>
-                    <button class="btn-primary btn-small" onclick="generateReport()">Generate Report</button>
+            <!-- FACULTY DASHBOARD -->
+            <section id="facultyDashboard" class="content-section hidden">
+                
+                <!-- Dashboard Header -->
+                <div class="faculty-header glass-panel">
+                    <div class="header-info">
+                        <h2 style="margin:0; font-size: 1.5rem;">Welcome, <span id="facName">Teacher</span></h2>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0;"><span id="facDept">Department of Computer Science</span> • <span id="facSemester">Fall Semester 2026</span></p>
+                    </div>
+                    <div class="header-date">
+                        <span id="facCurrentDate" style="font-weight: 600; font-size: 1.1rem; color: var(--accent-primary);">Date</span>
+                    </div>
                 </div>
-                <div id="reportContainer" style="margin-top:1.5rem;"></div>
+
+                <!-- Subject Management Section -->
+                <div class="subject-mgmt-section" style="margin-top: 1.5rem;">
+                    <div class="glass-panel" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h3 style="margin:0; color: #4fd1c5;">Subject:</h3>
+                            <select id="facSubjectSelect" style="padding: 0.5rem 1rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); font-size: 1rem; outline: none; cursor: pointer;">
+                                <option value="CS770_A">CS770_A</option>
+                                <option value="CS771_B">CS771_B</option>
+                            </select>
+                        </div>
+                        <div class="fac-stats-grid" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                            <div class="fac-stat"><span class="label">Total Students</span><span class="val" id="facTotStd">--</span></div>
+                            <div class="fac-stat"><span class="label">Above 75%</span><span class="val" style="color: var(--success);" id="facAbove">--</span></div>
+                            <div class="fac-stat"><span class="label">Below 75%</span><span class="val" style="color: var(--warning);" id="facBelow">--</span></div>
+                            <div class="fac-stat"><span class="label">Overall %</span><span class="val" style="color: #4fd1c5;" id="facOverall">--%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="faculty-tabs-container" style="margin-top: 2rem;">
+                    <div class="faculty-tabs">
+                        <button class="fac-tab-btn active" data-target="facTabAttendance">Attendance</button>
+                        <button class="fac-tab-btn" data-target="facTabMarks">Marks</button>
+                        <button class="fac-tab-btn" data-target="facTabAddStudent">Add Student</button>
+                        <button class="fac-tab-btn" data-target="facTabReset">Reset Attendance</button>
+                        <button class="fac-tab-btn" data-target="facTabAnalytics">Analytics</button>
+                        <button class="fac-tab-btn" data-target="facTabWorkload">Workload</button>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: Attendance -->
+                <div id="facTabAttendance" class="fac-tab-content active">
+                    <div class="glass-panel" style="margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+                            <h3 style="margin:0;">Mark Attendance</h3>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button class="btn-outline btn-small" id="btnMarkToday">Mark Today</button>
+                                <button class="btn-outline btn-small">View By Date</button>
+                                <button class="btn-outline btn-small">Add Extra Class</button>
+                                <button class="btn-primary btn-small" id="btnGenerateQr" style="background: var(--accent-secondary); border: none;" onclick="facGenerateQR()">Generate QR</button>
+                                <button class="btn-primary btn-small">Export PDF</button>
+                            </div>
+                        </div>
+
+                        <div class="attendance-controls" style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px;">
+                            <div class="control-group">
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.3rem;">Date</label>
+                                <input type="date" id="facAttDate" style="padding: 0.4rem 0.8rem; background: var(--bg-color); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-primary); outline: none;">
+                            </div>
+                            <div class="control-group">
+                                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.3rem;">Session Type</label>
+                                <select style="padding: 0.4rem 0.8rem; background: var(--bg-color); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-primary); outline: none;">
+                                    <option>Regular Class</option>
+                                    <option>Extra Class</option>
+                                    <option>Lab Session</option>
+                                    <option>Seminar</option>
+                                </select>
+                            </div>
+                            <div class="control-group" style="margin-left: auto; display: flex; align-items: flex-end; gap: 0.5rem;">
+                                <button class="btn-primary btn-small" style="background: var(--success); border: none;" onclick="facBulkMark('PRESENT')">Bulk Present</button>
+                                <button class="btn-danger btn-small" onclick="facBulkMark('ABSENT')">Bulk Absent</button>
+                            </div>
+                        </div>
+
+                        <div class="filters-search" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                            <input type="text" placeholder="Search by name or USN..." style="flex:1; min-width: 200px; padding: 0.5rem 1rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-primary); outline: none;">
+                            <select style="padding: 0.5rem 1rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-primary); outline: none;">
+                                <option>Sort by Roll Number</option>
+                                <option>Sort by Name</option>
+                                <option>Sort by Attendance %</option>
+                            </select>
+                        </div>
+
+                        <div class="student-attendance-list" id="facStudentAttList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: Marks -->
+                <div id="facTabMarks" class="fac-tab-content hidden">
+                    <div class="glass-panel" style="margin-top: 1.5rem;">
+                        <h3>Update Internal Marks</h3>
+                        <div class="table-container" style="margin-top: 1rem;">
+                            <table class="glass-table">
+                                <thead><tr><th>Name</th><th>USN</th><th>Current Marks</th><th>Update</th></tr></thead>
+                                <tbody id="facMarksTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: Add Student -->
+                <div id="facTabAddStudent" class="fac-tab-content hidden">
+                    <div class="glass-panel" style="margin-top: 1.5rem; max-width: 600px;">
+                        <h3>Add New Student</h3>
+                        <form id="facAddStudentForm" onsubmit="event.preventDefault(); alert('Student added (Mockup)');">
+                            <div class="input-group"><label>Student Name</label><input type="text" required></div>
+                            <div class="input-group"><label>USN / Roll Number</label><input type="text" required></div>
+                            <div class="input-group"><label>Email</label><input type="email" required></div>
+                            <button type="submit" class="btn-primary">Add Student</button>
+                        </form>
+                        <hr style="border:0; border-top: 1px solid var(--glass-border); margin: 2rem 0;">
+                        <h3>Import Student List</h3>
+                        <form onsubmit="event.preventDefault(); alert('List imported (Mockup)');">
+                            <div class="input-group"><label>Upload Excel/CSV</label><input type="file" accept=".csv, .xlsx" style="background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px;"></div>
+                            <button type="submit" class="btn-outline">Import Data</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: Reset -->
+                <div id="facTabReset" class="fac-tab-content hidden">
+                    <div class="glass-panel" style="margin-top: 1.5rem; max-width: 600px; text-align: center; margin-left: auto; margin-right: auto;">
+                        <h3 style="color: var(--danger);">Reset Attendance Records</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Warning: This action will clear all attendance records for the selected subject. This cannot be undone.</p>
+                        <select style="padding: 0.5rem 1rem; background: var(--bg-color); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-primary); margin-bottom: 1.5rem; width: 100%; outline: none;">
+                            <option>Reset Current Semester</option>
+                            <option>Reset Entire History</option>
+                        </select>
+                        <button class="btn-danger" style="width: 100%; padding: 0.8rem; font-size: 1rem;" onclick="confirm('Are you sure you want to reset attendance for this subject? This action is irreversible.')">Reset Attendance Now</button>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: Analytics -->
+                <div id="facTabAnalytics" class="fac-tab-content hidden">
+                    <div class="analytics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                        <div class="glass-panel">
+                            <h3>Attendance Overview</h3>
+                            <canvas id="facPieChart" style="max-height: 250px;"></canvas>
+                        </div>
+                        <div class="glass-panel">
+                            <h3>Monthly Trend</h3>
+                            <canvas id="facLineChart" style="max-height: 250px;"></canvas>
+                        </div>
+                        <div class="glass-panel" style="grid-column: 1 / -1;">
+                            <h3>Smart AI Insights</h3>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 250px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 1.5rem;">
+                                    <h4 style="color: #fca5a5; margin-bottom: 0.5rem; font-size: 1.1rem;"><i class="fa-solid fa-triangle-exclamation"></i> Students at Risk (<75%)</h4>
+                                    <ul style="color: var(--text-primary); font-size: 0.95rem; margin-left: 1.5rem; line-height: 1.6;">
+                                        <li>Omkar (21AI001) - 65%</li>
+                                        <li>Rahul (21AI045) - 72%</li>
+                                    </ul>
+                                    <button class="btn-outline btn-small" style="margin-top: 1rem; border-color: #ef4444; color: #ef4444;" onclick="alert('Warning emails sent to at-risk students.')">Send Warning Emails</button>
+                                </div>
+                                <div style="flex: 1; min-width: 250px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 1.5rem;">
+                                    <h4 style="color: #6ee7b7; margin-bottom: 0.5rem; font-size: 1.1rem;"><i class="fa-solid fa-chart-line"></i> Attendance Forecast</h4>
+                                    <p style="font-size: 0.95rem; line-height: 1.5;">Overall attendance is predicted to drop by <strong>2%</strong> next week based on historical trends during internal exam periods. Consider scheduling a revision class.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: Workload -->
+                <div id="facTabWorkload" class="fac-tab-content hidden">
+                    <div class="glass-panel" style="margin-top: 1.5rem;">
+                        <h3>Faculty Workload Dashboard</h3>
+                        <div class="fac-stats-grid" style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 1.5rem;" id="facWorkloadMetrics">
+                            <div class="fac-stat"><span class="label">Classes Conducted</span><span class="val" id="wlClasses">--</span></div>
+                            <div class="fac-stat"><span class="label">Weekly Hours</span><span class="val" style="color: var(--accent-secondary);" id="wlHours">--</span></div>
+                            <div class="fac-stat"><span class="label">Total Students</span><span class="val" style="color: var(--success);" id="wlStudents">--</span></div>
+                            <div class="fac-stat"><span class="label">Subjects Assigned</span><span class="val" style="color: #4fd1c5;" id="wlSubjects">--</span></div>
+                        </div>
+                        
+                        <div style="margin-top: 2.5rem;">
+                            <h3>Monthly Workload Trend</h3>
+                            <canvas id="facWorkloadChart" style="max-height: 250px; margin-top: 1rem;"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR Modal (Hidden by default) -->
+                <div id="qrModal" class="modal hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+                    <div class="glass-panel" style="background: var(--bg-color); width: 350px; text-align: center;">
+                        <h3 style="margin-bottom: 1rem;">Class QR Code</h3>
+                        <div id="qrCodeContainer" style="background: white; padding: 1rem; border-radius: 8px; display: inline-block; margin-bottom: 1rem;">
+                            <!-- Generate QR here -->
+                            <img id="qrImage" src="" alt="QR Code" style="width: 200px; height: 200px; display: none;">
+                            <p id="qrPlaceholder" style="color: black; font-size: 0.9rem; margin: 3rem 0;">Generating...</p>
+                        </div>
+                        <p id="qrTimer" style="color: var(--danger); font-weight: bold; margin-bottom: 1.5rem;">Expires in 60s</p>
+                        <button class="btn-outline" onclick="document.getElementById('qrModal').classList.add('hidden');">Close</button>
+                    </div>
+                </div>
             </section>
 
             <!-- STUDENT: Events -->
@@ -130,10 +346,78 @@
 
             <!-- STUDENT: My Attendance -->
             <section id="myAttendance" class="content-section hidden">
-                <h2>My Attendance Records</h2>
+                <div class="attendance-header glass-panel">
+                    <h2 style="margin: 0;">My Attendance</h2>
+                    <div class="subject-selector">
+                        <label for="attSubjectSelect">Select Subject:</label>
+                        <select id="attSubjectSelect">
+                            <option value="CS770_A">CS770_A</option>
+                            <option value="CS771_B">CS771_B</option>
+                            <option value="CS772_C">CS772_C</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="glass-panel attendance-details-card">
+                    <h3 id="attSubjectTitle" class="subject-title">CS770_A Attendance Details</h3>
+                    
+                    <div class="attendance-metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon icon-rate">🎯</div>
+                            <div class="metric-info">
+                                <h4>Attendance Rate</h4>
+                                <p id="attRate" class="metric-value">--%</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon icon-attended">✅</div>
+                            <div class="metric-info">
+                                <h4>Classes Attended</h4>
+                                <p id="attAttended" class="metric-value">--</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon icon-total">📚</div>
+                            <div class="metric-info">
+                                <h4>Total Classes</h4>
+                                <p id="attTotal" class="metric-value">--</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon icon-missed">❌</div>
+                            <div class="metric-info">
+                                <h4>Classes Missed</h4>
+                                <p id="attMissed" class="metric-value">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="attendance-progress-container">
+                        <div class="progress-labels">
+                            <span>Progress to 100%</span>
+                            <span id="attTrend" class="trend-indicator">--</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="attProgressBar" class="progress-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="attendance-footer">
+                        <div id="attStatusBadge" class="status-badge">--</div>
+                        <div class="prediction-calc glass-panel-inner">
+                            <div class="calc-icon">📈</div>
+                            <div class="calc-info">
+                                <p class="calc-label">Prediction Calculator</p>
+                                <p id="attPrediction" class="calc-text">-- classes needed to reach 75%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="recent-records-title">Recent Records</h3>
                 <div class="table-container">
                     <table class="glass-table">
-                        <thead><tr><th>Event</th><th>Date</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Subject/Event</th><th>Date</th><th>Status</th></tr></thead>
                         <tbody id="attendanceRecords"></tbody>
                     </table>
                 </div>
@@ -142,7 +426,10 @@
             <!-- STUDENT: My Marks -->
             <section id="myMarks" class="content-section hidden">
                 <h2>My Academic Marks</h2>
-                <div class="stats-grid" id="myMarksGrid"></div>
+                <div class="stats-grid" id="myMarksGrid">
+                    <div class="stat-card"><h3>Subject</h3><p class="stat-value" id="myMarksSubject">--</p></div>
+                    <div class="stat-card"><h3>Marks</h3><p class="stat-value" id="myMarksValue">--</p></div>
+                </div>
             </section>
 
             <!-- STUDENT: My Profile -->
@@ -150,10 +437,12 @@
                 <h2>My Profile</h2>
                 <div class="glass-panel" style="max-width:500px;">
                     <form id="profileForm">
-                        <div class="input-group"><label>Username</label><input type="text" id="profileUsername" required></div>
+                        <div class="input-group"><label>Name (Username)</label><input type="text" id="profileUsername" disabled style="opacity:0.7"></div>
+                        <div class="input-group"><label>USN</label><input type="text" id="profileUsn" disabled style="opacity:0.7" placeholder="Not assigned"></div>
+                        <div class="input-group"><label>Branch</label><input type="text" id="profileBranch" disabled style="opacity:0.7" placeholder="Not assigned"></div>
                         <div class="input-group"><label>Email</label><input type="email" id="profileEmail" required></div>
-                        <div class="input-group"><label>Branch</label><input type="text" id="profileBranch" placeholder="e.g. CSE"></div>
-                        <div class="input-group"><label>Section</label><input type="text" id="profileSection" placeholder="e.g. A"></div>
+                        <div class="input-group"><label>Phone Number</label><input type="text" id="profilePhone" placeholder="Enter phone number"></div>
+                        <div class="input-group"><label>Section</label><input type="text" id="profileSection" disabled style="opacity:0.7" placeholder="Not assigned"></div>
                         <div class="input-group"><label>LinkedIn URL</label><input type="url" id="profileLinkedin" placeholder="https://linkedin.com/in/..."></div>
                         <button type="submit" class="btn-primary">Save Profile</button>
                     </form>
@@ -177,30 +466,6 @@
         </main>
     </div>
 
-    <!-- ADD USER MODAL -->
-    <div id="addUserModal" class="modal hidden">
-        <div class="glass-panel modal-content">
-            <span class="close-btn" onclick="closeModal('addUserModal')">&times;</span>
-            <h2>Add User</h2>
-            <form id="addUserForm">
-                <div class="input-group">
-                    <label>Role</label>
-                    <select id="newUserRole" required>
-                        <option value="STUDENT">Student</option>
-                        <option value="TEACHER">Teacher</option>
-                    </select>
-                </div>
-                <div class="input-group"><label>Username</label><input type="text" id="newUsername" required placeholder="Username"></div>
-                <div class="input-group"><label>Email</label><input type="email" id="newEmail" required placeholder="Email"></div>
-                <div class="input-group"><label>Password</label><input type="password" id="newPassword2" required placeholder="Password"></div>
-                <div class="input-group"><label>Branch</label><input type="text" id="newBranch" placeholder="e.g. CSE"></div>
-                <div class="input-group"><label>Section</label><input type="text" id="newSection" placeholder="e.g. A"></div>
-                <div class="input-group"><label>Subject (for Teachers)</label><input type="text" id="newSubject" placeholder="e.g. Mathematics"></div>
-                <div id="addUserError" class="error-msg hidden"></div>
-                <button type="submit" class="btn-primary">Add User</button>
-            </form>
-        </div>
-    </div>
 
     <!-- CREATE EVENT MODAL -->
     <div id="eventModal" class="modal hidden">
@@ -215,6 +480,7 @@
                         <option value="REGULAR">Regular Event</option>
                         <option value="HACKATHON">Hackathon</option>
                         <option value="CHALLENGE">Technical Challenge</option>
+                        <option value="EXAM">Exam</option>
                     </select>
                 </div>
                 <div class="input-group"><label>Date & Time</label><input type="datetime-local" id="eventDate" required></div>
@@ -229,16 +495,34 @@
     <!-- EDIT USER MODAL -->
     <div id="editUserModal" class="modal hidden">
         <div class="glass-panel modal-content">
-            <span class="close-btn" onclick="closeModal('editUserModal')">&times;</span>
+            <span class="close-btn" style="color: #ef4444; font-size: 2rem; font-weight: bold;" onclick="closeModal('editUserModal')">&times;</span>
             <h2>Edit User</h2>
             <form id="editUserForm">
                 <input type="hidden" id="editUserId">
                 <div class="input-group"><label>Username</label><input type="text" id="editUsername" required></div>
                 <div class="input-group"><label>Email</label><input type="email" id="editEmail" required></div>
+                <div class="input-group"><label id="editUsnLabel">USN/ID</label><input type="text" id="editUsn"></div>
                 <div class="input-group"><label>Branch</label><input type="text" id="editBranch"></div>
                 <div class="input-group"><label>Section</label><input type="text" id="editSection"></div>
+                <div class="input-group">
+                    <label>Year</label>
+                    <select id="editYear">
+                        <option value="">-- Select Year --</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                    </select>
+                </div>
                 <div class="input-group"><label>Subject</label><input type="text" id="editSubject"></div>
-                <button type="submit" class="btn-primary">Save Changes</button>
+                <div class="input-group" style="display:flex;align-items:center;gap:0.75rem;">
+                    <input type="checkbox" id="editIsHod" style="width:18px;height:18px;accent-color:var(--accent-primary)">
+                    <label for="editIsHod" style="text-transform:none;font-size:0.95rem;">This teacher is HOD</label>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">Save Changes</button>
+                    <button type="button" class="btn-outline" style="flex: 1; border-color: #ef4444; color: #ef4444;" onclick="closeModal('editUserModal')">Cancel</button>
+                </div>
             </form>
         </div>
     </div>
@@ -252,6 +536,44 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <!-- STUDENT REGISTRATION CONFIRMATION MODAL -->
+    <div id="studentRegistrationModal" class="modal hidden">
+        <div class="glass-panel modal-content">
+            <span class="close-btn" onclick="closeModal('studentRegistrationModal')">&times;</span>
+            <h2>Confirm Registration</h2>
+            <p class="subtitle" id="registrationEventTitle">Event Title</p>
+            <form id="studentRegistrationForm">
+                <input type="hidden" id="regEventId">
+                <input type="hidden" id="regEventStatus">
+                <div class="input-group"><label>Name</label><input type="text" id="regConfirmName" required></div>
+                <div class="input-group"><label>USN</label><input type="text" id="regConfirmUsn" required></div>
+                <div class="input-group"><label>Email</label><input type="email" id="regConfirmEmail" required></div>
+                <div class="input-group"><label>Phone Number</label><input type="text" id="regConfirmPhone" required></div>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">The details you enter here will be saved to your profile and shared with the event organizers.</p>
+                <button type="submit" class="btn-primary">Complete Registration</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN VIEW REGISTRATIONS MODAL -->
+    <div id="viewRegistrationsModal" class="modal hidden">
+        <div class="glass-panel modal-content" style="max-width: 800px;">
+            <span class="close-btn" onclick="closeModal('viewRegistrationsModal')">&times;</span>
+            <h2>Event Registrations</h2>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <p class="subtitle" id="viewRegEventTitle" style="margin-bottom:0;">Event Title</p>
+                <button class="btn-outline btn-small" onclick="downloadRegistrationsCSV()" style="width:auto; padding: 0.4rem 1rem;"><i class="fa-solid fa-download"></i> Export to Excel (CSV)</button>
+            </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="glass-table">
+                    <thead><tr><th>Name</th><th>USN</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead>
+                    <tbody id="registrationsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="js/app.js?v=3"></script>
 </body>
 </html>

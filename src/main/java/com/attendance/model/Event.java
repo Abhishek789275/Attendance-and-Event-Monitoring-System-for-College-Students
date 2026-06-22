@@ -27,6 +27,10 @@ public class Event {
     private String linkedinLink;
     private String posterUrl;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
+
     public Event() {
     }
 
@@ -83,4 +87,7 @@ public class Event {
     public void setLinkedinLink(String linkedinLink) { this.linkedinLink = linkedinLink; }
     public String getPosterUrl() { return posterUrl; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
+
+    public Subject getSubject() { return subject; }
+    public void setSubject(Subject subject) { this.subject = subject; }
 }

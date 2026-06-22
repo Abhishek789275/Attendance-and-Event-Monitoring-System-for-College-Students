@@ -65,9 +65,15 @@ public class UserController {
         if (updated.getEmail() != null) user.setEmail(updated.getEmail());
         if (updated.getBranch() != null) user.setBranch(updated.getBranch());
         if (updated.getSection() != null) user.setSection(updated.getSection());
+        if (updated.getYear() != null) user.setYear(updated.getYear());
         if (updated.getMarks() != null) user.setMarks(updated.getMarks());
         if (updated.getLinkedinProfileUrl() != null) user.setLinkedinProfileUrl(updated.getLinkedinProfileUrl());
         if (updated.getSubject() != null) user.setSubject(updated.getSubject());
+        if (updated.getIsHod() != null) user.setIsHod(updated.getIsHod());
+        if (updated.getUsn() != null) user.setUsn(updated.getUsn());
+        if (updated.getPhoneNumber() != null) user.setPhoneNumber(updated.getPhoneNumber());
+        if (updated.getThemePreference() != null) user.setThemePreference(updated.getThemePreference());
+        if (updated.getOverallGpa() != null) user.setOverallGpa(updated.getOverallGpa());
         return ResponseEntity.ok(userRepository.save(user));
     }
 

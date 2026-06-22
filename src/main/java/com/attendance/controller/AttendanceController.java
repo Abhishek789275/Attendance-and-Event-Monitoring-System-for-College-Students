@@ -57,4 +57,46 @@ public class AttendanceController {
     public ResponseEntity<List<Attendance>> getEventAttendance(@PathVariable Long eventId) {
         return ResponseEntity.ok(attendanceRepository.findByEventId(eventId));
     }
+
+    @PostMapping("/qr-scan")
+    public ResponseEntity<?> scanQrCode(@RequestBody java.util.Map<String, String> payload) {
+        String token = payload.get("token");
+        Long userId = Long.parseLong(payload.get("userId"));
+        
+        // Mock token validation logic
+        if (token == null || !token.contains("-")) {
+            return ResponseEntity.badRequest().body("Invalid QR Token.");
+        }
+
+        Long eventId;
+        try {
+            eventId = Long.parseLong(token.split("-")[1]);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Malformed QR Token.");
+        }
+
+        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<Event> eventOpt = eventRepository.findById(eventId);
+
+        if (userOpt.isEmpty() || eventOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("User or Event not found.");
+        }
+
+        // Check if already checked in
+        List<Attendance> existing = attendanceRepository.findByUserId(userId);
+        boolean alreadyMarked = existing.stream().anyMatch(a -> a.getEvent().getId().equals(eventId));
+        if (alreadyMarked) {
+            return ResponseEntity.badRequest().body("Attendance already marked for this event.");
+        }
+
+        Attendance attendance = new Attendance();
+        attendance.setUser(userOpt.get());
+        attendance.setEvent(eventOpt.get());
+        attendance.setStatus(com.attendance.model.AttendanceStatus.PRESENT);
+        attendance.setTimestamp(LocalDateTime.now());
+        
+        attendanceRepository.save(attendance);
+
+        return ResponseEntity.ok("Attendance marked successfully via QR scan.");
+    }
 }

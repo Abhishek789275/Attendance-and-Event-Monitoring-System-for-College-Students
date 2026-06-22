@@ -2,7 +2,9 @@ package com.attendance.controller;
 
 import com.attendance.model.Event;
 import com.attendance.model.EventType;
+import com.attendance.model.Attendance;
 import com.attendance.repository.EventRepository;
+import com.attendance.repository.AttendanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,9 @@ public class EventController {
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private AttendanceRepository attendanceRepository;
 
     private static final String UPLOAD_DIR = "uploads/posters/";
 
@@ -70,7 +75,31 @@ public class EventController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
         if (!eventRepository.existsById(id)) return ResponseEntity.notFound().build();
+        
+        // Delete all associated attendance/registration records first
+        List<Attendance> associatedRecords = attendanceRepository.findByEventId(id);
+        attendanceRepository.deleteAll(associatedRecords);
+        
         eventRepository.deleteById(id);
         return ResponseEntity.ok("Event deleted");
+    }
+
+    @PostMapping("/{id}/generate-qr")
+    public ResponseEntity<?> generateQrCode(@PathVariable Long id) {
+        Optional<Event> eventOpt = eventRepository.findById(id);
+        if (eventOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        // In a real application, we would sign this with a JWT secret.
+        // For now, generating a random token with a 60-second validity.
+        String token = java.util.UUID.randomUUID().toString() + "-" + id;
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(60);
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("eventId", id);
+        response.put("token", token);
+        response.put("expiresAt", expiresAt);
+        response.put("message", "QR Token generated. Valid for 60 seconds.");
+
+        return ResponseEntity.ok(response);
     }
 }

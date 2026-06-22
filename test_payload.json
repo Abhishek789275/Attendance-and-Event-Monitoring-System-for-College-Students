@@ -1,0 +1,7 @@
+{
+  "username": "TestFaculty3",
+  "email": "testfac3@test.com",
+  "passwordHash": "123",
+  "role": "TEACHER",
+  "isHod": true
+}
